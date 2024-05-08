@@ -3,7 +3,7 @@ import {Inter} from "next/font/google";
 import Table from "react-bootstrap/Table";
 import {Alert, Container} from "react-bootstrap";
 import {GetServerSideProps, GetServerSidePropsContext} from "next";
-import {useState, useEffect, useRef} from "react";
+import {useState, useEffect, useRef, MutableRefObject} from "react";
 import {
   Pagination,
   PaginationContent,
@@ -49,45 +49,53 @@ export const getServerSideProps = (async (ctx: GetServerSidePropsContext): Promi
 
 
 export default function Home({statusCode, users}: TGetServerSideProps) {
-const initialized = useRef(false)
+  const initialized: MutableRefObject<boolean> = useRef(false)
 
-const [currentPage, setCurrentPage] = useState(1);
-const [itemsPerPage, setItemsPerPage] = useState(20);
-const pagesCount = Math.ceil(users.length / itemsPerPage);
-const [pages, setPages] = useState([]);
-const [startIdx, setStartIdx] = useState(0)
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(20);
+  const pagesCount: number = Math.ceil(users.length / itemsPerPage);
+  const [pages, setPages] = useState<number[]>([]);
+  const [startIdx, setStartIdx] = useState<number>(0)
 
-const lastItemIndex = currentPage * itemsPerPage;
-const firstItemIndex = lastItemIndex - itemsPerPage;
-const currentItems = users.slice(firstItemIndex, lastItemIndex);
-const paginationLimit = 10;
+  const lastItemIndex: number = currentPage * itemsPerPage;
+  const firstItemIndex: number = lastItemIndex - itemsPerPage;
+  const currentItems: TUserItem[] = users.slice(firstItemIndex, lastItemIndex);
+  const paginationLimit: number = 10;
 
-useEffect(() => {
-  if (!initialized.current) {
-    initialized.current = true
-    const localPages = new Array(pagesCount);
-    for (let i = 0; i < localPages.length; i++) {
-      localPages[i] = i + 1;
+  useEffect(() => {
+    if (!initialized.current) {
+      initialized.current = true
+      const localPages: number[] = new Array(pagesCount);
+      for (let i: number = 0; i < localPages.length; i++) {
+        localPages[i] = i + 1;
+      }
+      setPages(oldPages => [...oldPages, ...localPages]);
     }
-    setPages(oldPages => [...oldPages, ...localPages]);
-  }
-}, [])
+  }, [])
 
-useEffect(() => {
-  setStartIdx(Math.max(0, Math.min(Math.floor(currentPage-1-paginationLimit/2), pages.length-paginationLimit)))
-}, [currentPage])
+  useEffect(() => {
+    setStartIdx(
+      Math.max(
+        0, 
+        Math.min(
+          Math.floor(currentPage-1-paginationLimit/2), 
+          pages.length-paginationLimit
+        )
+      )
+    )
+  }, [currentPage])
 
-const handleNextPage = () => {
-  if (currentPage < pages.length) {
-    setCurrentPage(currentPage + 1);
+  const handleNextPage = () => {
+    if (currentPage < pages.length) {
+      setCurrentPage(currentPage + 1);
+    }
   }
-}
 
-const handlePrevPage = () => {
-  if (currentPage > 1) {
-    setCurrentPage(currentPage - 1);
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
   }
-}
 
   if (statusCode !== 200) {
     return <Alert variant={'danger'}>Ошибка {statusCode} при загрузке данных</Alert>
@@ -134,50 +142,66 @@ const handlePrevPage = () => {
             </tbody>
           </Table>
 
-        <Pagination>
-  <PaginationContent className="flex flex-row list-none">
-    <PaginationItem
-        className={`rounded-l-sm ${currentPage <= 1 && "pointer-events-none opacity-50"}`}
-        onClick={() => {
-        setCurrentPage(1);
-      }}><Image src={ChevronLeft} alt="В начало" />
-    </PaginationItem>
-    <PaginationItem
-        className={currentPage <= 1 ? "pointer-events-none opacity-50" : undefined}
-        onClick={() => {
-        handlePrevPage();
-      }}><Image src={ArrowLeft} alt="Назад" />
-    </PaginationItem>
+          <Pagination>
+            <PaginationContent className="flex flex-row list-none">
+              <PaginationItem
+                  className={`rounded-l-sm ${currentPage <= 1 
+                    && "pointer-events-none opacity-50"}`}
+                  onClick={() => {
+                    setCurrentPage(1);
+                  }}
+                >
+                  <Image src={ChevronLeft} alt="В начало" />
+              </PaginationItem>
 
-    {pages.slice(startIdx, startIdx + paginationLimit).map((page,idx) =>  (
-      <PaginationItem key={idx}
-        className={currentPage === page && "bg-cyan-600 text-white"}
-          onClick={() => {
-            setCurrentPage(page);
-          }}
-      >
-          {page}
-      </PaginationItem>
-    ))}
-    <PaginationItem
-        className={currentPage >= pages.length ? "pointer-events-none opacity-50" : undefined}
-        onClick={() => {
-        handleNextPage();
-      }}
-    >
-      <Image src={ArrowRight} alt="Вперед" className="fill-yellow-700" />
-    </PaginationItem>
-    <PaginationItem
-        className={`rounded-r-sm ${currentPage >= pages.length && "pointer-events-none opacity-50"}`}
-        onClick={() => {
-          setCurrentPage(pages.length);
-        }}
-    >
-      <Image src={ChevronRight} alt="В конец" />
-    </PaginationItem>
+              <PaginationItem
+                  className={currentPage <= 1 
+                    ? "pointer-events-none opacity-50" 
+                    : undefined}
+                  onClick={() => {
+                    handlePrevPage();
+                  }}
+                >
+                  <Image src={ArrowLeft} alt="Назад" />
+              </PaginationItem>
 
-  </PaginationContent>
-</Pagination>
+              {pages.slice(startIdx, startIdx + paginationLimit).map((page,idx) =>  (
+                <PaginationItem 
+                  key={idx}
+                  className={currentPage === page 
+                    ? "bg-cyan-600 text-white" 
+                    : undefined}
+                  onClick={() => {
+                    setCurrentPage(page);
+                  }}
+                >
+                  {page}
+                </PaginationItem>
+              ))}
+
+              <PaginationItem
+                  className={currentPage >= pages.length 
+                    ? "pointer-events-none opacity-50" 
+                    : undefined}
+                  onClick={() => {
+                    handleNextPage();
+                  }}
+              >
+                <Image src={ArrowRight} alt="Вперед" className="fill-yellow-700" />
+              </PaginationItem>
+
+              <PaginationItem
+                  className={`rounded-r-sm ${currentPage >= pages.length 
+                    && "pointer-events-none opacity-50"}`}
+                  onClick={() => {
+                    setCurrentPage(pages.length);
+                  }}
+              >
+                <Image src={ChevronRight} alt="В конец" />
+              </PaginationItem>
+
+            </PaginationContent>
+          </Pagination>
         </Container>
       </main>
     </>
