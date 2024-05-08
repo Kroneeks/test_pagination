@@ -3,7 +3,6 @@ import {TypeOrmModule} from "@nestjs/typeorm";
 import {UsersModule} from "./users/users.module";
 import 'dotenv/config'
 
-console.log(process.env.APP_PG_URL || "don't exist env");
 const pg = new URL(process.env.APP_PG_URL);
 
 @Module({

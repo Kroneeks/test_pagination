@@ -3,15 +3,11 @@ import {Inter} from "next/font/google";
 import Table from "react-bootstrap/Table";
 import {Alert, Container} from "react-bootstrap";
 import {GetServerSideProps, GetServerSidePropsContext} from "next";
-import {useState} from "react";
+import {useState, useEffect, useRef} from "react";
 import {
   Pagination,
   PaginationContent,
-  PaginationEllipsis,
   PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
 } from "@/components/ui/pagination";
 import Image from "next/image";
 import ChevronLeft from "@/assets/icons/chevron-left.svg";
@@ -53,21 +49,33 @@ export const getServerSideProps = (async (ctx: GetServerSidePropsContext): Promi
 
 
 export default function Home({statusCode, users}: TGetServerSideProps) {
-
-const rowsPerPage = 20;
-const [startIndex, setStartIndex] = useState(0);
-const [endIndex, setEndIndex] = useState(rowsPerPage);
-
+const initialized = useRef(false)
 
 const [currentPage, setCurrentPage] = useState(1);
 const [itemsPerPage, setItemsPerPage] = useState(20);
+const pagesCount = Math.ceil(users.length / itemsPerPage);
+const [pages, setPages] = useState([]);
+const [startIdx, setStartIdx] = useState(0)
+
 const lastItemIndex = currentPage * itemsPerPage;
 const firstItemIndex = lastItemIndex - itemsPerPage;
 const currentItems = users.slice(firstItemIndex, lastItemIndex);
-let pages = [];
-for (let i = 0; i <= Math.ceil(users.length / itemsPerPage); i+=itemsPerPage) {
-  pages.push(i/itemsPerPage + 1);
-}
+const paginationLimit = 10;
+
+useEffect(() => {
+  if (!initialized.current) {
+    initialized.current = true
+    const localPages = new Array(pagesCount);
+    for (let i = 0; i < localPages.length; i++) {
+      localPages[i] = i + 1;
+    }
+    setPages(oldPages => [...oldPages, ...localPages]);
+  }
+}, [])
+
+useEffect(() => {
+  setStartIdx(Math.max(0, Math.min(Math.floor(currentPage-1-paginationLimit/2), pages.length-paginationLimit)))
+}, [currentPage])
 
 const handleNextPage = () => {
   if (currentPage < pages.length) {
@@ -129,7 +137,7 @@ const handlePrevPage = () => {
         <Pagination>
   <PaginationContent className="flex flex-row list-none">
     <PaginationItem
-        className={currentPage <= 1 ? "pointer-events-none opacity-50" : undefined}
+        className={`rounded-l-sm ${currentPage <= 1 && "pointer-events-none opacity-50"}`}
         onClick={() => {
         setCurrentPage(1);
       }}><Image src={ChevronLeft} alt="В начало" />
@@ -141,14 +149,14 @@ const handlePrevPage = () => {
       }}><Image src={ArrowLeft} alt="Назад" />
     </PaginationItem>
 
-    {pages.map((page,idx) =>  (
+    {pages.slice(startIdx, startIdx + paginationLimit).map((page,idx) =>  (
       <PaginationItem key={idx}
         className={currentPage === page && "bg-cyan-600 text-white"}
           onClick={() => {
-            setCurrentPage(idx + 1);
+            setCurrentPage(page);
           }}
       >
-          {idx + 1}
+          {page}
       </PaginationItem>
     ))}
     <PaginationItem
@@ -160,7 +168,7 @@ const handlePrevPage = () => {
       <Image src={ArrowRight} alt="Вперед" className="fill-yellow-700" />
     </PaginationItem>
     <PaginationItem
-        className={currentPage >= pages.length ? "pointer-events-none opacity-50" : undefined}
+        className={`rounded-r-sm ${currentPage >= pages.length && "pointer-events-none opacity-50"}`}
         onClick={() => {
           setCurrentPage(pages.length);
         }}
@@ -170,9 +178,6 @@ const handlePrevPage = () => {
 
   </PaginationContent>
 </Pagination>
-
-          {/*TODO add pagination*/}
-
         </Container>
       </main>
     </>
