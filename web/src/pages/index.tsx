@@ -12,7 +12,12 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination"
+} from "@/components/ui/pagination";
+import Image from "next/image";
+import ChevronLeft from "@/assets/icons/chevron-left.svg";
+import ArrowLeft from "@/assets/icons/arrow-left.svg";
+import ChevronRight from "@/assets/icons/chevron-right.svg";
+import ArrowRight from "@/assets/icons/arrow-right.svg";
 
 
 const inter = Inter({subsets: ["latin"]});
@@ -61,7 +66,7 @@ const firstItemIndex = lastItemIndex - itemsPerPage;
 const currentItems = users.slice(firstItemIndex, lastItemIndex);
 let pages = [];
 for (let i = 0; i <= Math.ceil(users.length / itemsPerPage); i+=itemsPerPage) {
-  pages.push(i);
+  pages.push(i/itemsPerPage + 1);
 }
 
 const handleNextPage = () => {
@@ -122,47 +127,45 @@ const handlePrevPage = () => {
           </Table>
 
         <Pagination>
-  <PaginationContent>
-    <PaginationItem>
-      <PaginationLink
-        className={startIndex === 0 ? "pointer-events-none opacity-50" : undefined}
-        href="#"
+  <PaginationContent className="flex flex-row list-none">
+    <PaginationItem
+        className={currentPage <= 1 ? "pointer-events-none opacity-50" : undefined}
         onClick={() => {
         setCurrentPage(1);
-      }}>начало</PaginationLink>
+      }}><Image src={ChevronLeft} alt="В начало" />
     </PaginationItem>
-    <PaginationItem>
-      <PaginationLink
-        href="#"
+    <PaginationItem
+        className={currentPage <= 1 ? "pointer-events-none opacity-50" : undefined}
         onClick={() => {
         handlePrevPage();
-      }}>назад</PaginationLink>
+      }}><Image src={ArrowLeft} alt="Назад" />
     </PaginationItem>
 
     {pages.map((page,idx) =>  (
       <PaginationItem key={idx}
-        className={currentPage === page ? "bg-neutral-100 rounded-md" : undefined}
+        className={currentPage === page && "bg-cyan-600 text-white"}
+          onClick={() => {
+            setCurrentPage(idx + 1);
+          }}
       >
-        <PaginationLink href="#" onClick={() => {
-          setStartIndex(page);
-          setEndIndex(page + rowsPerPage);
-        }}>{idx + 1}</PaginationLink>
+          {idx + 1}
       </PaginationItem>
     ))}
-    <PaginationItem>
-      <PaginationLink
-        href="#"
+    <PaginationItem
+        className={currentPage >= pages.length ? "pointer-events-none opacity-50" : undefined}
         onClick={() => {
         handleNextPage();
-      }}>вперед</PaginationLink>
+      }}
+    >
+      <Image src={ArrowRight} alt="Вперед" className="fill-yellow-700" />
     </PaginationItem>
-    <PaginationItem>
-      <PaginationLink
-        className={endIndex === 0 ? "pointer-events-none opacity-50" : undefined}
-        href="#"
+    <PaginationItem
+        className={currentPage >= pages.length ? "pointer-events-none opacity-50" : undefined}
         onClick={() => {
-          setCurrentPage(pages.length - 1);
-      }}>конец</PaginationLink>
+          setCurrentPage(pages.length);
+        }}
+    >
+      <Image src={ChevronRight} alt="В конец" />
     </PaginationItem>
 
   </PaginationContent>
